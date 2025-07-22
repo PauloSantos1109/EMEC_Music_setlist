@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{title}}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #121212;
+      --bg-light: #f7f7f7;
+      --card-dark: rgba(255, 255, 255, 0.06);
+      --card-light: rgba(255, 255, 255, 0.85);
+      --text-dark: #ffffff;
+      --text-light: #1a1a1a;
+      --highlight: #4ade80;
+      --blur: blur(12px);
+      --radius: 16px;
+      --transition: 0.3s ease;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+      transition: background-color var(--transition), color var(--transition);
+    }
+
+    body.light {
+      background-color: var(--bg-light);
+      color: var(--text-light);
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 1rem;
+      max-width: 768px;
+      margin: auto;
+    }
+
+    .card {
+      background: var(--card-dark);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      padding: 1.5rem;
+      border-radius: var(--radius);
+      transition: background var(--transition), color var(--transition);
+    }
+
+    body.light .card {
+      background: var(--card-light);
+      color: var(--text-light);
+    }
+
+    .title {
+      font-size: 1.8rem;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .lyrics {
+      font-size: 1.2rem;
+      line-height: 1.7;
+      white-space: pre-line;
+      text-align: center;
+    }
+
+    .setlist {
+      display: none;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .setlist.visible {
+      display: flex;
+    }
+
+    .setlist h2 {
+      font-size: 1.1rem;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .setlist ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .setlist li {
+      padding: 0.5rem;
+      border-radius: 8px;
+      transition: background var(--transition);
+    }
+
+    .setlist li.current {
+      font-weight: bold;
+      color: var(--highlight);
+    }
+
+    .actions {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 999;
+    }
+
+    .btn {
+      padding: 0.6rem 1rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      background: var(--card-dark);
+      color: inherit;
+      backdrop-filter: var(--blur);
+      transition: background var(--transition), color var(--transition);
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    body.light .btn {
+      background: var(--card-light);
+    }
+
+    @media (min-width: 768px) {
+      .container {
+        flex-direction: row;
+      }
+
+      .lyrics-card,
+      .setlist-card {
+        flex: 1;
+      }
+
+      .setlist {
+        display: flex !important;
+      }
+
+      .actions {
+        top: 1rem;
+        right: 1rem;
+        flex-direction: row;
+      }
+
+      .lyrics-card {
+        display: block !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="card lyrics-card" id="lyricsCard">
+      <h1 class="title" id="title">Carregando...</h1>
+      <div class="lyrics" id="lyrics">Carregando letra...</div>
+    </section>
+
+    <section class="card setlist-card">
+      <div class="setlist" id="songsList">
+        <h2>Setlist</h2>
+        <ul id="songs"></ul>
+      </div>
+    </section>
+  </main>
+
+  <div class="actions">
+    <button class="btn" onclick="toggleTheme()">🌗 Tema</button>
+    <button class="btn" onclick="toggleSongsList()">🎵 Setlist</button>
+  </div>
+
+  <script>
+    async function fetchData() {
+      try {
+        const [currentRes, listRes] = await Promise.all([
+          fetch('http://localhost:3000/current-song'),
+          fetch('http://localhost:3000/songs')
+        ]);
+
+        const current = await currentRes.json();
+        const list = await listRes.json();
+
+        document.getElementById('title').textContent = current.title;
+        document.getElementById('lyrics').textContent = current.lyrics;
+        document.title = `🎵 Tocando: ${current.title}`;
+
+        const songsEl = document.getElementById('songs');
+        songsEl.innerHTML = '';
+        list.forEach(song => {
+          const li = document.createElement('li');
+          li.textContent = song.title;
+          if (song.title === current.title) li.classList.add('current');
+          songsEl.appendChild(li);
+        });
+      } catch (error) {
+        document.getElementById('lyrics').textContent = 'Erro ao carregar a letra.';
+        console.error('Erro ao carregar dados:', error);
+      }
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('light');
+    }
+
+    function toggleSongsList() {
+      const songsList = document.getElementById('songsList');
+      const lyricsCard = document.getElementById('lyricsCard');
+
+      const isMobile = window.innerWidth < 768;
+
+      songsList.classList.toggle('visible');
+
+      if (isMobile) {
+        lyricsCard.style.display = songsList.classList.contains('visible') ? 'none' : 'block';
+      }
+    }
+
+    // Garante o comportamento correto ao redimensionar a tela
+    window.addEventListener('resize', () => {
+      const lyricsCard = document.getElementById('lyricsCard');
+      const songsList = document.getElementById('songsList');
+
+      if (window.innerWidth >= 768) {
+        lyricsCard.style.display = 'block';
+        songsList.classList.add('visible');
+      } else if (!songsList.classList.contains('visible')) {
+        lyricsCard.style.display = 'block';
+      }
+    });
+
+    fetchData();
+    setInterval(fetchData, 15000); // atualiza a cada 15s
+  </script>
+</body>
+</html>
