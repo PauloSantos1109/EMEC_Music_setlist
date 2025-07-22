@@ -100,6 +100,7 @@
       padding: 0.5rem;
       border-radius: 8px;
       transition: background var(--transition);
+      cursor: pointer;
     }
 
     .setlist li.current {
@@ -184,33 +185,58 @@
   </div>
 
   <script>
-      async function fetchData() {
-    try {
-      const [currentRes, listRes] = await Promise.all([
-        fetch('/current-song'),
-        fetch('/songs')
-      ]);
+    async function changeCurrentSong(newSong) {
+      try {
+        const res = await fetch('/change-song', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newSong),
+        });
 
-      const current = await currentRes.json();
-      const list = await listRes.json();
+        if (!res.ok) throw new Error('Erro ao mudar a música');
 
-      document.getElementById('title').textContent = current.title;
-      document.getElementById('lyrics').textContent = current.lyrics;
-      document.title = `🎵 Tocando: ${current.title}`;
-
-      const songsEl = document.getElementById('songs');
-      songsEl.innerHTML = '';
-      list.forEach(song => {
-        const li = document.createElement('li');
-        li.textContent = song.title;
-        if (song.title === current.title) li.classList.add('current');
-        songsEl.appendChild(li);
-      });
-    } catch (error) {
-      document.getElementById('lyrics').textContent = 'Erro ao carregar a letra.';
-      console.error('Erro ao carregar dados:', error);
+        // Atualiza UI
+        await fetchData();
+      } catch (err) {
+        alert(err.message);
+      }
     }
-  }
+
+    async function fetchData() {
+      try {
+        const [currentRes, listRes] = await Promise.all([
+          fetch('/current-song'),
+          fetch('/songs')
+        ]);
+
+        const current = await currentRes.json();
+        const list = await listRes.json();
+
+        document.getElementById('title').textContent = current.title;
+        document.getElementById('lyrics').textContent = current.lyrics;
+        document.title = `🎵 Tocando: ${current.title}`;
+
+        const songsEl = document.getElementById('songs');
+        songsEl.innerHTML = '';
+
+        list.forEach(song => {
+          const li = document.createElement('li');
+          li.textContent = song.title;
+
+          if (song.title === current.title) li.classList.add('current');
+
+          // Ao clicar em uma música, troca para ela
+          li.addEventListener('click', () => {
+            changeCurrentSong(song);
+          });
+
+          songsEl.appendChild(li);
+        });
+      } catch (error) {
+        document.getElementById('lyrics').textContent = 'Erro ao carregar a letra.';
+        console.error('Erro ao carregar dados:', error);
+      }
+    }
 
     function toggleTheme() {
       document.body.classList.toggle('light');
@@ -229,7 +255,6 @@
       }
     }
 
-    // Garante o comportamento correto ao redimensionar a tela
     window.addEventListener('resize', () => {
       const lyricsCard = document.getElementById('lyricsCard');
       const songsList = document.getElementById('songsList');
@@ -243,7 +268,7 @@
     });
 
     fetchData();
-    setInterval(fetchData, 15000); // atualiza a cada 15s
+    setInterval(fetchData, 15000);
   </script>
 </body>
 </html>
