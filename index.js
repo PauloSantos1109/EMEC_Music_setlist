@@ -23,7 +23,7 @@ app.get('/current-song', (req, res) => {
   res.json(currentSong);
 });
 
-app.get('/home', (req, res) => {
+app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
