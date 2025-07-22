@@ -184,33 +184,33 @@
   </div>
 
   <script>
-    async function fetchData() {
-      try {
-        const [currentRes, listRes] = await Promise.all([
-          fetch('http://localhost:3000/current-song'),
-          fetch('http://localhost:3000/songs')
-        ]);
+      async function fetchData() {
+    try {
+      const [currentRes, listRes] = await Promise.all([
+        fetch('/current-song'),
+        fetch('/songs')
+      ]);
 
-        const current = await currentRes.json();
-        const list = await listRes.json();
+      const current = await currentRes.json();
+      const list = await listRes.json();
 
-        document.getElementById('title').textContent = current.title;
-        document.getElementById('lyrics').textContent = current.lyrics;
-        document.title = `🎵 Tocando: ${current.title}`;
+      document.getElementById('title').textContent = current.title;
+      document.getElementById('lyrics').textContent = current.lyrics;
+      document.title = `🎵 Tocando: ${current.title}`;
 
-        const songsEl = document.getElementById('songs');
-        songsEl.innerHTML = '';
-        list.forEach(song => {
-          const li = document.createElement('li');
-          li.textContent = song.title;
-          if (song.title === current.title) li.classList.add('current');
-          songsEl.appendChild(li);
-        });
-      } catch (error) {
-        document.getElementById('lyrics').textContent = 'Erro ao carregar a letra.';
-        console.error('Erro ao carregar dados:', error);
-      }
+      const songsEl = document.getElementById('songs');
+      songsEl.innerHTML = '';
+      list.forEach(song => {
+        const li = document.createElement('li');
+        li.textContent = song.title;
+        if (song.title === current.title) li.classList.add('current');
+        songsEl.appendChild(li);
+      });
+    } catch (error) {
+      document.getElementById('lyrics').textContent = 'Erro ao carregar a letra.';
+      console.error('Erro ao carregar dados:', error);
     }
+  }
 
     function toggleTheme() {
       document.body.classList.toggle('light');
